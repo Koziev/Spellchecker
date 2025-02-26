@@ -4,23 +4,30 @@ A high-precision, rule- and dictionary-based spellchecker designed for Russian-l
 
 ### Key Features
 
-1. Precision-First Approach:
+1. **Precision-First Approach**:
 
 - The spellchecker prioritizes minimizing false positives over catching every possible error. This ensures that corrections are accurate and reliable, which is critical for preparing high-quality training data for language models.
 
 - Incorrect fixes can introduce anomalies that degrade the performance of generative LMs on downstream tasks. This tool avoids such issues by correcting only unambiguous errors.
 
-2. CPU-Only, No ML Components:
+2. **CPU-Only, No ML Components**:
 
 - The spellchecker operates entirely on the CPU and does not rely on machine learning models. This makes it lightweight, fast, and suitable for processing large text corpora (tens of GBs) in data preparation pipelines.
 
-3. Interpretability and Determinism:
+3. **Interpretability and Determinism**:
 
 - Every correction is traceable and deterministic. You can use a debugger to identify which rule or dictionary entry caused a specific correction, ensuring full transparency and control.
 
-4. Extensible Dictionary and Rules:
+4. **Extensible Dictionary and Rules**:
 
 The spellchecker is designed for easy expansion. You can add new words to the dictionary or define custom replacement rules to adapt the tool to specific domains or use cases.
+
+
+### Dictionary files
+
+Unfortunately, due to problems with LFS quotas I can't upload the binary files of the dictionary to this repository :(
+
+Use the [link](https://drive.google.com/file/d/1NZwLkpNcnxY15YB19M7O0KKBR2g6e0dL) to download the archive, unpack it to the root of the local copy of the repository.
 
 
 ### Usage
