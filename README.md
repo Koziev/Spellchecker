@@ -39,7 +39,6 @@ from spellcheck import PoeticSpellchecker
 from udpipe_parser import UdpipeParser
 
 
-
 if __name__ == '__main__':
     parser = UdpipeParser()
     parser.load('./models')
@@ -58,7 +57,7 @@ The spellchecker is built on the principle of absolute minimization of false pos
 
 ##### Performance on the RUPOR Dataset
 
-The spellchecker has been evaluated on the[RUPOR](https://github.com/Koziev/RUPOR) dataset.
+The spellchecker has been evaluated on the [RUPOR](https://github.com/Koziev/RUPOR) dataset.
 Given the focus on precision, the evaluation uses the F<sub>0.5</sub> metric (which emphasizes precision over recall) instead of the traditional F<sub>1</sub> score.
 
 | Domain               | F<sub>0.5</sub> | Precision | Recall |
