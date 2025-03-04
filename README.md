@@ -12,11 +12,11 @@ A high-precision, rule- and dictionary-based spellchecker designed for Russian-l
 
 2. **CPU-Only, No ML Components**:
 
-- The spellchecker operates entirely on the CPU and does not rely on machine learning models. This makes it lightweight, fast, and suitable for processing large text corpora (tens of GBs) in data preparation pipelines.
+The spellchecker operates entirely on the CPU and does not rely on machine learning models. This makes it lightweight, fast, and suitable for processing large text corpora (tens of GBs) in data preparation pipelines.
 
 3. **Interpretability and Determinism**:
 
-- Every correction is traceable and deterministic. You can use a debugger to identify which rule or dictionary entry caused a specific correction, ensuring full transparency and control.
+Every correction is traceable and deterministic. You can use a debugger to identify which rule or dictionary entry caused a specific correction, ensuring full transparency and control.
 
 4. **Extensible Dictionary and Rules**:
 
