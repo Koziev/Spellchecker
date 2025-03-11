@@ -1,6 +1,8 @@
 # Spellchecker
 
-A high-precision, rule- and dictionary-based spellchecker designed for Russian-language texts. This tool emphasizes precision over recall, making it ideal for preparing clean data for pretraining and fine-tuning language models (LMs).
+A high-precision, rule- and dictionary-based spellchecker designed for Russian-language texts and briefly described
+in the article [Generation of Russian Poetry of Different Genres and Styles Using Neural Networks with Character-Level Tokenization](link to be inserted here after camera-ready paper submission).
+This tool emphasizes precision over recall, making it ideal for preparing clean data for pretraining and fine-tuning language models (LMs).
 
 ### Key Features
 
