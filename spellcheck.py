@@ -349,11 +349,11 @@ class PoeticSpellchecker(object):
         text2 = text
 
         cyr_set = '[АБВГДЕЁЖЗИЙКЛМНОПРСТУФХЦЧШЩЪЫЬЭЮЯабвгдеёжзийклмнопрстуфхцчшщъыьэюя]'
-        lat2cyr = {'3': 'З', 'K': 'К', 'O': 'О', 'C': 'С', 'A': 'А', 'B': 'В', 'o': 'о', 'a': 'а', 'c': 'с', 'k': 'к', 'y': 'у'}
+        lat2cyr = {'3': 'З', 'K': 'К', 'O': 'О', 'C': 'С', 'A': 'А', 'B': 'В', 'o': 'о', 'a': 'а', 'c': 'с', 'k': 'к', 'y': 'у', '6': 'б'}
 
         m1 = re.search(r'\b([KOCABoacky])[,!]?\s'+cyr_set, text2)
         if m1:
-            for g1, g2 in re.findall(r'\b([3KOCABoacky])([,!]?\s'+cyr_set+')', text2):
+            for g1, g2 in re.findall(r'\b([KOCABoacky])([,!]?\s'+cyr_set+')', text2):
                 text2 = re.sub(rf'\b({g1})({g2})', lambda x: lat2cyr[x.group(1)]+x.group(2), text2)
                 fixups.append((g1, lat2cyr[g1]))
 
@@ -362,6 +362,15 @@ class PoeticSpellchecker(object):
             for g1, g2 in re.findall('('+cyr_set + r'[,!?.:]?\s)([oacky])\b', text2):
                 text2 = re.sub(rf'({g1}[,!?.:]?\s)({g2})\b', lambda x: x.group(1)+lat2cyr[x.group(2)], text2)
                 fixups.append((g2, lat2cyr[g2]))
+
+        # Alien char surrounded by cyrillic chars
+        # те6я  ==> тебя
+        m2 = re.search(cyr_set + r'([oacky6])' + cyr_set, text2)
+        if m2:
+            for g1, g2, g3 in re.findall('('+cyr_set + r')([oacky6])(' + cyr_set + ')', text2):
+                text2 = re.sub(rf'({g1})({g2})({g3})', lambda x: x.group(1)+lat2cyr[x.group(2)]+x.group(3), text2)
+                fixups.append((g2, lat2cyr[g2]))
+
 
         # for bad, good in self.repl_rx_1:
         #     m = re.search(bad, text2, flags=re.I)  # | re.MULTILINE
@@ -1162,6 +1171,7 @@ if __name__ == '__main__':
 
     # A small check of functionality
     new_text, fixups = schecker.fix('за скучаешь')
+    assert(new_text=='заскучаешь')
     print(new_text)
 
     r = schecker.is_known_word('ещё')
