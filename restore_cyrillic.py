@@ -14,7 +14,7 @@ import re
 
 
 def restore_cyrillic(text):
-    for c, c_cyr in zip('coaxpeyëόáéóýúќўόun', 'соахреуёоаеоуикуоип'):
+    for c, c_cyr in zip('coaxpeyëόáéóýúќўόun6', 'соахреуёоаеоуикуоипб'):
         rs = r'([абвгдеёжзийклмнопрстуфхцчшщъыьэюя ])('+c+')'
         if re.search(rs, text, flags=re.I) is not None:
             text = re.sub(rs, r'\1'+c_cyr, text, flags=re.I)
