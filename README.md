@@ -26,11 +26,8 @@ The spellchecker is designed for easy expansion. You can add new words to the di
 
 5. **Restoring Cyrillic Characters in Russian Text**:
 
-Some Latin characters are visually identical or very similar to Cyrillic characters. When these Latin characters appear in Russian text, they can be difficult to detect visually.
-However, their presence can significantly impact the quality of language model training, often leading to similar issues in generated texts.
-Our experience has shown that the frequency of such defects can be high enough to negatively affect model performance.
+Some Latin characters and digits are visually identical or very similar to Cyrillic characters. When these characters appear in Russian text, they can be difficult to detect visually. However, their presence can significantly impact the quality of language model training, often leading to similar issues in generated texts. Our experience has shown that the frequency of such defects can be high enough to negatively affect model performance.
 To address this, we have developed a simple yet effective solution to restore Cyrillic characters in Russian text - see [restore_cyrillic.py](restore_cyrillic.py).
-
 
 ### Dictionary files
 
@@ -48,15 +45,14 @@ from spellcheck import PoeticSpellchecker
 from udpipe_parser import UdpipeParser
 
 
-if __name__ == '__main__':
-    parser = UdpipeParser()
-    parser.load('./models')
+parser = UdpipeParser()
+parser.load('./models')
 
-    schecker = PoeticSpellchecker(parser)
-    schecker.load('./data')
+schecker = PoeticSpellchecker(parser)
+schecker.load('./data')
 
-    new_text, fixups = schecker.fix("Вмести в себя все от кровенья мира")
-    print(new_text)
+new_text, fixups = schecker.fix("Вмести в себя все от кровенья мира")
+print(new_text)
 ```
 
 
