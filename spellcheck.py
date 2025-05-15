@@ -234,12 +234,23 @@ class PoeticSpellchecker(object):
             if ' ' not in good_word and good_word not in self.known_words:
                 self.known_words.add(good_word)
 
+        with open(os.path.join(proj_dir, 'tmp/prefix_derivation.json'), 'r') as f:
+            derivation_data = json.load(f)
+            self.compound_prefixes = derivation_data['compound_prefixes']
+            self.compound_tails = derivation_data['compound_tails']
+            self.compound_prefixes_min_len = min(map(len, self.compound_prefixes))
+            self.compound_prefixes_max_len = max(map(len, self.compound_prefixes))
+
         with open(os.path.join(output_dir, 'spellcheck.pkl'), 'wb') as f:
             pickle.dump(self.known_words, f)
             pickle.dump(self.word2upos, f)
             pickle.dump(self.repl_rx, f)
             pickle.dump(self.repl_rx__1, f)
             pickle.dump(self.word_replaces, f)
+            pickle.dump(self.compound_prefixes, f)
+            pickle.dump(self.compound_tails, f)
+            pickle.dump(self.compound_prefixes_min_len, f)
+            pickle.dump(self.compound_prefixes_max_len, f)
             #pickle.dump(self.acceptable_edits, f)
 
         self.post_load()
@@ -251,6 +262,10 @@ class PoeticSpellchecker(object):
             self.repl_rx = pickle.load(f)
             self.repl_rx__1 = pickle.load(f)
             self.word_replaces = pickle.load(f)
+            self.compound_prefixes = pickle.load(f)
+            self.compound_tails = pickle.load(f)
+            self.compound_prefixes_min_len = pickle.load(f)
+            self.compound_prefixes_max_len = pickle.load(f)
             #self.acceptable_edits = pickle.load(f)
 
         self.post_load()
@@ -268,7 +283,7 @@ class PoeticSpellchecker(object):
 
     emoji_pattern = re.compile("^(©|" + EMOJI_CHARACTER + ")", flags=re.UNICODE)
 
-    def is_known_word(self, word: str, strict_yofication: bool=False) -> bool:
+    def is_known_word(self, word: str, strict_yofication: bool=False, allow_compounds: bool=True) -> bool:
         lword = word.lower()
         if lword in self.known_words or word in string.punctuation or word in "«»—–…“”":
             return True
@@ -288,6 +303,15 @@ class PoeticSpellchecker(object):
 
         if PoeticSpellchecker.emoji_pattern.match(word) is not None:
             return True
+
+        # 15-05-2025 applying compound noun and adjective (de)composition rules
+        if allow_compounds:
+            for prefix_len in range(self.compound_prefixes_min_len, min(self.compound_prefixes_max_len, len(word))):
+                head = word[:prefix_len]
+                if head in self.compound_prefixes:
+                    tail = word[prefix_len:]
+                    if tail in self.known_words or tail in self.compound_tails:
+                        return True
 
         return False
 
@@ -933,7 +957,7 @@ class PoeticSpellchecker(object):
                         token2 = token0
                         if token[0].lower() != token[0]:
                             token2 = token2[0].upper() + token2[1:]
-                elif re.search('[3a-zëáóúόéýќўú]', token, flags=re.I) is not None and re.search('[абвгдеёжзийклмнопрстуфхцчшщъыьэюя]', token, flags=re.I) is not None:
+                elif re.search('[63a-zëáóúόéýќўú]', token, flags=re.I) is not None and re.search('[абвгдеёжзийклмнопрстуфхцчшщъыьэюя]', token, flags=re.I) is not None:
                     # В слове смешана латиница и кириллица.
                     token0 = restore_cyrillic(token)
                     if self.is_known_word(token0):
