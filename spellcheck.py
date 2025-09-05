@@ -183,7 +183,9 @@ class PoeticSpellchecker(object):
                     print(f'ERROR: латиница в замене {bad} ==> {good}')
                     exit(0)
 
-                if re.match(r'^по\-\w+', bad) is not None:
+                if re.search(r'[*#@]', bad):
+                    self.word_replaces.append((bad, good))
+                elif re.match(r'^по\-\w+', bad) is not None:
                     self.repl_rx__1.append((bad, good))
                 elif re.search(r'\W', bad) is None:
                     self.word_replaces.append((bad, good))
@@ -193,11 +195,15 @@ class PoeticSpellchecker(object):
                 else:
                     self.repl_rx.append((bad, good))
 
+        blacklist = set(corrupted_word for corrupted_word, fixed_word in self.word_replaces)
         with open(os.path.join(data_dir, 'poetry', 'dict', 'word2tags.dat'), 'r') as rdr:
             for line in rdr:
                 if line:
                     fields = line.split('\t')
                     word = fields[0].replace(' - ', '-')
+                    if word in blacklist:
+                        continue
+
                     self.known_words.add(word.lower())
                     upos = fields[1]
                     if upos in ('ИНФИНИТИВ', 'ДЕЕПРИЧАСТИЕ'):
@@ -210,6 +216,9 @@ class PoeticSpellchecker(object):
         with open(os.path.join(data_dir, 'speller', 'dict', 'known_words.2.txt'), 'r') as rdr:
             for line in rdr:
                 freq, word = line.strip().split('\t')
+                if word in blacklist:
+                    continue
+
                 if int(freq) >= 20 and not word.endswith('ъ') and re.search(r'цц|ьь|ъъ|чч|ыы', word) is None:
                     self.known_words.add(word)
 
@@ -217,7 +226,7 @@ class PoeticSpellchecker(object):
             with open(os.path.join(data_dir, 'speller', 'dict', fn), 'r') as rdr:
                 for line in rdr:
                     word = line.strip()
-                    if word:
+                    if word and word not in blacklist:
                         self.known_words.add(word.lower())
 
         # 18.11.2024 слова из корпуса RUCOLA2 (исправленные тексты) в качестве источника нормальных слов
@@ -283,9 +292,9 @@ class PoeticSpellchecker(object):
 
     emoji_pattern = re.compile("^(©|" + EMOJI_CHARACTER + ")", flags=re.UNICODE)
 
-    def is_known_word(self, word: str, strict_yofication: bool=False, allow_compounds: bool=True) -> bool:
+    def is_known_word(self, word: str, strict_yofication: bool=True, allow_compounds: bool=True) -> bool:
         lword = word.lower()
-        if lword in self.known_words or word in string.punctuation or word in "«»—–…“”":
+        if lword in self.known_words or word in string.punctuation or ''.join(set(word)) in "~@#*«»—–…“”":
             return True
 
         if not strict_yofication and 'ё' in lword and lword.replace('ё', 'е') in self.known_words:
@@ -1194,6 +1203,9 @@ if __name__ == '__main__':
     schecker.compile(os.path.join(proj_dir, 'data'), os.path.join(proj_dir, 'data/speller'))
 
     # A small check of functionality
+    assert(len(list(schecker.search_oov('*'*10))) == 0)
+
+
     new_text, fixups = schecker.fix('за скучаешь')
     assert(new_text=='заскучаешь')
     print(new_text)
