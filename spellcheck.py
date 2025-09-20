@@ -8,6 +8,7 @@ import glob
 import traceback
 
 from spellchecker import SpellChecker
+import jellyfish
 
 from restore_cyrillic import restore_cyrillic
 from tokenization_utils import tokenize_slowly
@@ -46,8 +47,12 @@ class TrieNode:
             return None
 
 
+def is_cyr_lat_mixture(word:str) -> bool:
+    return re.search(r'[a-z]', word, flags=re.I) and re.search(r'[абвгдеёжзийкмнопрстуфхцчшщъыьэюя]', word, flags=re.I)
+
+
 class PoeticSpellchecker(object):
-    def __init__(self, parser, allow_norwig_speller=False):
+    def __init__(self, parser, allow_norwig_speller: bool=False):
         self.parser = parser
         self.allow_norwig_speller = allow_norwig_speller
 
@@ -170,6 +175,7 @@ class PoeticSpellchecker(object):
             self.word_replaces.append((bad, good))
 
         fp = os.path.join(data_dir, 'speller', 'dict', 'replaces.txt')
+        all_required_good_words = set()
         with open(fp) as rdr:
             pairs = [pair for pair in re.split(r'\n{2,}', rdr.read(), flags=re.MULTILINE) if pair]
             for pair in pairs:
@@ -180,7 +186,7 @@ class PoeticSpellchecker(object):
                 bad, good = lines
 
                 if re.search('[a-z]', good, flags=re.I):
-                    print(f'ERROR: латиница в замене {bad} ==> {good}')
+                    print(f'ERROR: латиница в правой части замены {bad} ==> {good}')
                     exit(0)
 
                 if re.search(r'[*#@]', bad):
@@ -194,6 +200,7 @@ class PoeticSpellchecker(object):
                     self.repl_rx.append((bad2, good))
                 else:
                     self.repl_rx.append((bad, good))
+                all_required_good_words.add(good)
 
         blacklist = set(corrupted_word for corrupted_word, fixed_word in self.word_replaces)
         with open(os.path.join(data_dir, 'poetry', 'dict', 'word2tags.dat'), 'r') as rdr:
@@ -226,8 +233,16 @@ class PoeticSpellchecker(object):
             with open(os.path.join(data_dir, 'speller', 'dict', fn), 'r') as rdr:
                 for line in rdr:
                     word = line.strip()
+<<<<<<< HEAD
+                    if is_cyr_lat_mixture(word):
+                        print('Found word {} in {}: it contains mixture of cyrillic and latin characters'.format(word, fn))
+                    else:
+                        if word and word not in blacklist:
+                            self.known_words.add(word.lower())
+=======
                     if word and word not in blacklist:
                         self.known_words.add(word.lower())
+>>>>>>> c3fdd1c432bd90365c1d558d4ef4a9e36dbcc805
 
         # 18.11.2024 слова из корпуса RUCOLA2 (исправленные тексты) в качестве источника нормальных слов
         fpx = glob.glob(os.path.join(data_dir, 'speller', 'rucola2') + '/**/test.json', recursive=True)
@@ -243,6 +258,14 @@ class PoeticSpellchecker(object):
             if ' ' not in good_word and good_word not in self.known_words:
                 self.known_words.add(good_word)
 
+<<<<<<< HEAD
+        # Проверим, что правые части замен в replaces.txt входят в список known_words.
+        for word in all_required_good_words:
+            if word not in self.known_words and ' ' not in word:
+                print(f'Right part of replace ... ==> {word} not found in known_words')
+
+=======
+>>>>>>> c3fdd1c432bd90365c1d558d4ef4a9e36dbcc805
         with open(os.path.join(proj_dir, 'tmp/prefix_derivation.json'), 'r') as f:
             derivation_data = json.load(f)
             self.compound_prefixes = derivation_data['compound_prefixes']
@@ -640,12 +663,14 @@ class PoeticSpellchecker(object):
                 # п0д ==> под
                 m = re.match(r'^\w+0\w+|\w+0|0\w+$', ltoken)
                 if m:
-                    token2 = ltoken.replace('0', 'о')
-                    if token[0].lower() != token[0]:
-                        token2 = token2[0].upper() + token2[1:]
-                    fixups.append((token, token2))
-                    text2 = re.sub(r'\b' + token + r'\b', token2, text2)
-                    continue
+                    candidate = ltoken.replace('0', 'о')
+                    if candidate in self.known_words:
+                        token2 = candidate
+                        if token[0].lower() != token[0]:
+                            token2 = token2[0].upper() + token2[1:]
+                        fixups.append((token, token2))
+                        text2 = re.sub(r'\b' + token + r'\b', token2, text2)
+                        continue
 
                 # лa’вровый
                 # полон′или
@@ -1142,12 +1167,28 @@ class PoeticSpellchecker(object):
                             token2 = token2[0].upper() + token2[1:]
                 elif self.norwig_spell is not None and len(token) >= 7 and re.match(r'^\w+$', token):
                     # Пробуем заменить длинное слово по словарю
-                    token3 = self.norwig_spell.correction(token.lower())
-                    if token3:
-                        if token[0].lower() != token[0]:
-                            token3 = token3[0].upper() + token3[1:]
-                        if token3 != token:
-                            token2 = token3
+                    #token3 = self.norwig_spell.correction(token.lower())
+
+                    possible_corrections = []
+                    ltoken = token.lower()
+                    candidates = self.norwig_spell.candidates(ltoken)
+                    if candidates:
+                        for candidate in candidates:
+                            if candidate in self.known_words:
+                                #print(f'DEBUG@1160 {ltoken} ==> {candidate}')
+                                d = jellyfish.damerau_levenshtein_distance(ltoken, candidate)
+                                if d == 1:
+                                    possible_corrections.append((candidate, d))
+
+                        if possible_corrections:
+                            min_dist = min(d for _, d in possible_corrections)
+                            min_corrections = [candidate for candidate, dist in possible_corrections if dist==min_dist]
+                            if len(min_corrections) == 1:
+                                token3 = min_corrections[0]
+                                if token[0].lower() != token[0]:
+                                    token3 = token3[0].upper() + token3[1:]
+                                if token3 != token:
+                                    token2 = token3
 
                 if token2:
                     fixups.append((token, token2))
